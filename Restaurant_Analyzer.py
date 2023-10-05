@@ -38,9 +38,8 @@ page = st.sidebar.selectbox("Choose a view", ["Map View", "Analytics", "Search"]
 if page == "Map View":
     st.title("Restaurants")
     choice = st.selectbox("Choose a viewing mode", ["View all data on map", "Paginate data for faster viewing", "Select a specific category"])
-
-    m = folium.Map(location=[df['Latitude'].mean(), df['Longitude'].mean()], zoom_start=4)
-
+    map_type = st.selectbox("Choose a map type", ["Streamlit", "Folium"])  # Add this line to choose map type
+    
     if choice == "View all data on map":
         data_to_plot = df.copy()
     elif choice == "Paginate data for faster viewing":
@@ -54,18 +53,21 @@ if page == "Map View":
         category = st.selectbox("Select a category", df['Category'].unique())
         data_to_plot = df[df['Category'] == category]
 
-    for _, row in data_to_plot.iterrows():
-        tooltip_text = f"Name: {row['Title']}<br>Category: {row['Category']}<br>Rating: {row['Rating']}"
-        folium.Marker(
-            [row['Latitude'], row['Longitude']],
-            tooltip=tooltip_text,
-            icon=folium.Icon(color="blue", icon="info-sign")
-        ).add_to(m)
+    if map_type == "Folium":
+        m = folium.Map(location=[df['Latitude'].mean(), df['Longitude'].mean()], zoom_start=4)
+        for _, row in data_to_plot.iterrows():
+            tooltip_text = f"Name: {row['Title']}<br>Category: {row['Category']}<br>Rating: {row['Rating']}"
+            folium.Marker(
+                [row['Latitude'], row['Longitude']],
+                tooltip=tooltip_text,
+                icon=folium.Icon(color="blue", icon="info-sign")
+            ).add_to(m)
+        folium_static(m)
 
-    folium_static(m)
-
-    if choice == "Paginate data for faster viewing":
-        st.table(data_to_plot[['Title', 'Category', 'Rating', 'Phone', 'Address', 'Latitude', 'Longitude']])
+        if choice == "Paginate data for faster viewing":
+            st.table(data_to_plot[['Title', 'Category', 'Rating', 'Phone', 'Address', 'Latitude', 'Longitude']])
+    else:  # Streamlit map
+        st.map(data_to_plot.rename(columns={"Latitude": "lat", "Longitude": "lon"})[['lat', 'lon']])
 
 elif page == "Analytics":
     st.title("Restaurants Analytics")
